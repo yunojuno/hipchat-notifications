@@ -51,14 +51,16 @@ class HipChatError(Exception):
 
 def _token():
     """
-    Get a valid 'personal' auth token.
+    Get a valid 'personal' auth token from HIPCHAT_API_TOKEN env var.
 
     The HipChat API is rate limited, and the advice from the support team
     is that we either build a proper HipChat Connect app (which will take
     time, although may the way ahead), OR we use a set of tokens, each of
-    which is a valid user token. To this end, the TOKENS var read in from
-    the environ _could_ be a list of comma-separated tokens. This function
-    will pick on at random from the list.
+    which is a valid user token. To this end, the HIPCHAT_API_TOKEN var read
+    in from the environ _could_ be a list of comma-separated tokens.
+    This function will pick on at random from the list.
+
+    Return a token or None.
 
     """
     try:
@@ -99,17 +101,17 @@ def _api(
 
     Args:
         url: API endpoint
-        message: string, The message body, 1-10000 chars.
+        message: The message body (1-10000 chars)
 
     Kwargs:
-        color: string, the colour of the message background (must be one of
-            the VALID_COLORS).
-        label: string, "A label to be shown in addition to the sender's name"
-        notify: bool, if True then notifies the recipient according to their
-            app notification settings.
-        message_format: text or html (defaults to html); html allows some
-            rich formatting, text allows '@' notifications, /code and
-            /quote format options.
+        color: background color for message (VALID_COLOR, default='yellow')
+        label: label to be shown in addition to the sender's name, (0-64 chars)
+        notify: bool (default=False), whether this message should trigger a
+            user notification (change the tab color, play a sound, notify
+            mobile phones, etc). Each recipient's notification preferences
+            are taken into account.
+        message_format: determines how the message is rendered inside
+            HipChat applications (VALID_FORMAT, default='html')
 
     Returns HTTP Response object if successful, else raises HipChatError.
 
@@ -158,18 +160,18 @@ def notify_room(
     Send a room notification via 'Send room notification' API.
 
     Args:
-        room: the id or name of the destination
-        message: the message to send
+        room: The id or url encoded name of the room
+        message: The message body (1-10,000 chars)
 
     Kwargs:
-        color: string, the colour of the message background (must be one of
-            the VALID_COLORS).
-        label: string, "A label to be shown in addition to the sender's name"
-        notify: bool, if True then notifies the recipient according to their
-            app notification settings.
-        message_format: text or html (defaults to html); html allows some
-            rich formatting, text allows '@' notifications, /code and
-            /quote format options.
+        color: background color for message (VALID_COLOR, default='yellow')
+        label: label to be shown in addition to the sender's name, (0-64 chars)
+        notify: bool (default=False), whether this message should trigger a
+            user notification (change the tab color, play a sound, notify
+            mobile phones, etc). Each recipient's notification preferences
+            are taken into account.
+        message_format: determines how the message is rendered inside
+            HipChat applications (VALID_FORMAT, default='html')
 
     Returns HTTP Response object if successful, else raises HipChatError.
 
@@ -196,15 +198,16 @@ def notify_user(
     Send a user notification via 'Send private message' API.
 
     Args:
-        user: the id or email of the recipient
-        message: the message to send
+        user: The id, email address, or mention name of the recipient
+        message: the message body (1-10,000 chars)
 
     Kwargs:
-        notify: bool, if True then notifies the recipient according to their
-            app notification settings.
-        message_format: text or html (defaults to html); html allows some
-            rich formatting, text allows '@' notifications, /code and
-            /quote format options.
+        notify: bool (default=False), whether this message should trigger a
+            user notification (change the tab color, play a sound, notify
+            mobile phones, etc). Each recipient's notification preferences
+            are taken into account.
+        message_format: determines how the message is rendered inside
+            HipChat applications (VALID_FORMAT, default='html')
 
     Returns HTTP Response object if successful, else raises HipChatError.
 
