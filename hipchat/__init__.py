@@ -143,7 +143,6 @@ def _api(
         resp.raise_for_status()
         return resp
     except requests.HTTPError as ex:
-        print ex
         raise HipChatError(ex.response)
 
 
