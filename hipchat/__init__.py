@@ -119,14 +119,14 @@ def _api(
     # asserts - message, colour and format are acceptable
     assert message is not None, u"Missing message param"
     assert len(message) >= 1, u"Message too short, must be 1-10,000 chars."
-    assert color in VALID_COLORS, u"Invalid color value: %s" % color
-    assert message_format in VALID_FORMATS, u"Invalid format: %s" % message_format
+    assert color in VALID_COLORS, u"Invalid color value: {}".format(color)
+    assert message_format in VALID_FORMATS, u"Invalid format: {}".format(message_format)
 
     message = message[:10000]
     label = label[:64] if label else None
     token = _token()
     if token is None:
-        logger.debug("HipChat is disabled, logging message: %s", message)
+        logger.debug("HipChat message: %s", message)
         return
     headers = _headers(auth_token=token)
     data = {
@@ -175,7 +175,6 @@ def notify_room(
     Returns HTTP Response object if successful, else raises HipChatError.
 
     """
-    assert room is not None, "HipChat room_id_or_name is missing."
     return _api(
         SEND_ROOM_MESSAGE_URL(room),
         message,
@@ -211,7 +210,6 @@ def notify_user(
     Returns HTTP Response object if successful, else raises HipChatError.
 
     """
-    assert user is not None, "HipChat user is missing."
     return _api(
         SEND_USER_MESSAGE_URL(user),
         message,
