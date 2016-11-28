@@ -57,10 +57,10 @@ def _token():
     is that we either build a proper HipChat Connect app (which will take
     time, although may the way ahead), OR we use a set of tokens, each of
     which is a valid user token. To this end, the HIPCHAT_API_TOKEN var read
-    in from the environ _could_ be a list of comma-separated tokens.
-    This function will pick on at random from the list.
+    in from the environ _could_ be a list of comma-separated tokens, in which
+    case this function will pick one at random from the list.
 
-    Return a token or None.
+    Return a token if one exists or None.
 
     """
     try:
@@ -122,21 +122,19 @@ def _api(
     assert color in VALID_COLORS, u"Invalid color value: {}".format(color)
     assert message_format in VALID_FORMATS, u"Invalid format: {}".format(message_format)
 
-    message = message[:10000]
-    label = label[:64] if label else None
     token = _token()
     if token is None:
-        logger.debug("HipChat message: %s", message)
+        logger.debug("HipChat API token not found, logging message instead:")
+        logger.debug(message)
         return
     headers = _headers(auth_token=token)
     data = {
-        'message': message,
+        'message': message[:10000],
         'color': color,
         'notify': notify,
-        'message_format': message_format
+        'message_format': message_format,
+        'from': label[:64] if label else ''
     }
-    if label is not None:
-        data['from'] = label
 
     try:
         resp = requests.post(url, json=data, headers=headers)
