@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import logging
 import mock
 import requests
 import unittest
@@ -6,16 +7,74 @@ from test.test_support import EnvironmentVarGuard
 
 from hipchat import (
     HipChatError,
-    _token, _headers, _api,
-    notify_room, notify_user,
-    yellow, grey, gray, green, purple, red,
-    SEND_USER_MESSAGE_URL, SEND_ROOM_MESSAGE_URL,
+    HipChatHandler,
+    notify_room,
+    notify_user,
+    gray,
+    green,
+    grey,
+    purple,
+    red,
+    yellow,
 )
+from hipchat.notifications import (
+    _api,
+    _headers,
+    _token,
+    SEND_USER_MESSAGE_URL,
+    SEND_ROOM_MESSAGE_URL,
+)
+
+
+class LoggerTests(unittest.TestCase):
+
+    """hipchat.logger tests."""
+
+    def setUp(self):
+        self.logger = logging.getLogger('test')
+        self.logger.setLevel(logging.DEBUG)
+
+    @mock.patch('hipchat.logger.notify_room')
+    def test_logger_defaults(self, mock_notify):
+        handler = HipChatHandler('token', 'room')
+        self.logger.handlers = [handler]
+        self.logger.debug('foo')
+        mock_notify.assert_called_with(
+            'room',
+            'foo',
+            color='gray',
+            label='',
+            message_format='html',
+            notify=False
+        )
+
+    @mock.patch('hipchat.logger.notify_room')
+    def test_logger_settings(self, mock_notify):
+        handler = HipChatHandler(
+            'token',
+            'room',
+            colors={
+                'DEBUG': 'red'
+            },
+            label='hello',
+            message_format='text',
+            notify=True
+        )
+        self.logger.handlers = [handler]
+        self.logger.debug('foo')
+        mock_notify.assert_called_with(
+            'room',
+            'foo',
+            color='red',
+            label='hello',
+            message_format='text',
+            notify=True
+        )
 
 
 class ErrorTests(unittest.TestCase):
 
-    """hipchat.HipChatError tests."""
+    """hipchat.exceptions tests."""
 
     def test_init(self):
         """Test initialisation from JSON."""
@@ -103,7 +162,8 @@ class FunctionTests(unittest.TestCase):
                 'notify': False,
                 'message_format': 'html',
                 'color': 'yellow',
-                'message': 'bar'
+                'message': 'bar',
+                'from': ''
             }
         )
 
@@ -124,7 +184,7 @@ class FunctionTests(unittest.TestCase):
                 'message_format': 'text',
                 'color': 'red',
                 'message': 'bar',
-                'from': 'baz'
+                'from': 'baz',
             }
         )
 
@@ -134,7 +194,7 @@ class FunctionTests(unittest.TestCase):
         mock_post.side_effect = requests.HTTPError(response=response)
         self.assertRaises(HipChatError, _api, 'foo', 'bar')
 
-    @mock.patch('hipchat._api')
+    @mock.patch('hipchat.notifications._api')
     def test_notify_room(self, mock_api):
         """Test the notify_room function calls the correct API."""
         notify_room('foo', 'bar')
@@ -147,7 +207,7 @@ class FunctionTests(unittest.TestCase):
             label=None
         )
 
-    @mock.patch('hipchat._api')
+    @mock.patch('hipchat.notifications._api')
     def test_notify_user(self, mock_api):
         """Test the notify_user function calls the correct API."""
         notify_user('Fred', 'Hello, Fred')
@@ -158,32 +218,32 @@ class FunctionTests(unittest.TestCase):
             notify=False,
         )
 
-    @mock.patch('hipchat.notify_room')
+    @mock.patch('hipchat.notifications.notify_room')
     def test_yellow(self, mock_api):
         yellow('foo', 'bar')
         mock_api.assert_called_once_with('foo', 'bar', color='yellow')
 
-    @mock.patch('hipchat.notify_room')
+    @mock.patch('hipchat.notifications.notify_room')
     def test_gray(self, mock_api):
         gray('foo', 'bar')
         mock_api.assert_called_once_with('foo', 'bar', color='gray')
 
-    @mock.patch('hipchat.notify_room')
+    @mock.patch('hipchat.notifications.notify_room')
     def test_grey(self, mock_api):
         grey('foo', 'bar')
         mock_api.assert_called_once_with('foo', 'bar', color='gray')
 
-    @mock.patch('hipchat.notify_room')
+    @mock.patch('hipchat.notifications.notify_room')
     def test_green(self, mock_api):
         green('foo', 'bar')
         mock_api.assert_called_once_with('foo', 'bar', color='green')
 
-    @mock.patch('hipchat.notify_room')
+    @mock.patch('hipchat.notifications.notify_room')
     def test_purple(self, mock_api):
         purple('foo', 'bar')
         mock_api.assert_called_once_with('foo', 'bar', color='purple')
 
-    @mock.patch('hipchat.notify_room')
+    @mock.patch('hipchat.notifications.notify_room')
     def test_red(self, mock_api):
         red('foo', 'bar')
         mock_api.assert_called_once_with('foo', 'bar', color='red')
