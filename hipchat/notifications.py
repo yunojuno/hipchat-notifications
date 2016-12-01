@@ -23,7 +23,7 @@ import requests
 from .exceptions import HipChatError
 
 API_V2_ROOT = 'https://api.hipchat.com/v2/'
-SEND_USER_MESSAGE_URL = lambda user: "{}user/{}/notification".format(API_V2_ROOT, user)
+SEND_USER_MESSAGE_URL = lambda user: "{}user/{}/message".format(API_V2_ROOT, user)
 SEND_ROOM_MESSAGE_URL = lambda room: "{}room/{}/notification".format(API_V2_ROOT, room)
 VALID_COLORS = ('yellow', 'green', 'red', 'purple', 'gray', 'random')
 VALID_FORMATS = ('text', 'html')
