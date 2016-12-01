@@ -14,7 +14,7 @@ os.chdir(normpath(join(abspath(__file__), os.pardir)))
 
 setup(
     name="hipchat-notifications",
-    version="0.1.2-dev",
+    version="0.2.0",
     packages=find_packages(),
     include_package_data=True,
     install_requires=REQUIREMENTS,
