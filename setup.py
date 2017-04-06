@@ -22,8 +22,8 @@ setup(
     description="Basic functions for sending notifications via HipChat API (v2)",
     long_description=README,
     url='https://github.com/yunojuno/hipchat-notifications',
-    author="Hugo Rodger-Brown",
-    author_email='hugo@yunojuno.com',
+    author="YunoJuno",
+    author_email='code@yunojuno.com',
     classifiers=[
         'Intended Audience :: Developers',
         'License :: OSI Approved :: MIT License',
