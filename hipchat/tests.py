@@ -1,28 +1,25 @@
 # -*- coding: utf-8 -*-
 import logging
-import mock
 import requests
 import unittest
-from test.test_support import EnvironmentVarGuard
+from unittest import mock
 
-from hipchat import (
-    HipChatError,
-    HipChatHandler,
-    notify_room,
-    notify_user,
-    gray,
-    green,
-    grey,
-    purple,
-    red,
-    yellow,
-)
-from hipchat.notifications import (
+from .exceptions import HipChatError
+from .logger import HipChatHandler
+from .notifications import (
     _api,
     _headers,
     _token,
-    SEND_USER_MESSAGE_URL,
+    gray,
+    green,
+    grey,
+    notify_room,
+    notify_user,
+    purple,
+    red,
     SEND_ROOM_MESSAGE_URL,
+    SEND_USER_MESSAGE_URL,
+    yellow,
 )
 
 
@@ -34,7 +31,7 @@ class LoggerTests(unittest.TestCase):
         self.logger = logging.getLogger('test')
         self.logger.setLevel(logging.DEBUG)
 
-    @mock.patch('hipchat.logger.notify_room')
+    @unittest.mock.patch('hipchat.logger.notify_room')
     def test_logger_defaults(self, mock_notify):
         handler = HipChatHandler('token', 'room')
         self.logger.handlers = [handler]
@@ -48,7 +45,7 @@ class LoggerTests(unittest.TestCase):
             notify=False
         )
 
-    @mock.patch('hipchat.logger.notify_room')
+    @unittest.mock.patch('hipchat.logger.notify_room')
     def test_logger_settings(self, mock_notify):
         handler = HipChatHandler(
             'token',
@@ -83,7 +80,7 @@ class ErrorTests(unittest.TestCase):
                 'message': 'foobar'
             }
         }
-        response = mock.Mock(spec=requests.Response)
+        response = unittest.mock.Mock(spec=requests.Response)
 
         # good status code is not valid
         response.status_code = 200
@@ -105,23 +102,17 @@ class FunctionTests(unittest.TestCase):
 
     """hipchat module function tests."""
 
-    def setUp(self):
-        self.environ = EnvironmentVarGuard()
-
-    def tearDown(self):
-        self.environ.clear()
-
     def test__token(self):
         """Test _token function can handle all variations of HIPCHAT_API_TOKEN."""
         # no env var set, should be None
         self.assertIsNone(_token())
         # a single token
-        self.environ['HIPCHAT_API_TOKEN'] = 'abc'
-        self.assertEqual(_token(), 'abc')
+        with unittest.mock.patch.dict('os.environ', {'HIPCHAT_API_TOKEN': 'abc'}):
+            self.assertEqual(_token(), 'abc')
         # multiple tokens - can't be sure which one we'll get,
         # but can check that the string is split correctly
-        self.environ['HIPCHAT_API_TOKEN'] = 'abc,def , ghi'
-        self.assertTrue(_token() in ['abc', 'def', 'ghi'])
+        with unittest.mock.patch.dict('os.environ', {'HIPCHAT_API_TOKEN': 'abc,def , ghi'}):
+            self.assertTrue(_token() in ['abc', 'def', 'ghi'])
 
     def test__headers(self):
         """Test _headers formats token correctly."""
@@ -134,7 +125,7 @@ class FunctionTests(unittest.TestCase):
             }
         )
 
-    @mock.patch('requests.post')
+    @unittest.mock.patch('requests.post')
     def test__api(self, mock_post):
         """Test all code paths in the _api function work as expected."""
         # message is too short, long, missing
@@ -147,54 +138,52 @@ class FunctionTests(unittest.TestCase):
         self.assertIsNone(_api('foo', 'bar'))
         mock_post.assert_not_called()
         # set a token
-        self.environ['HIPCHAT_API_TOKEN'] = 'token'
+        with unittest.mock.patch.dict('os.environ', {'HIPCHAT_API_TOKEN': 'token'}):
+            # try the defaults
+            self.assertEqual(_api('foo', 'bar'), mock_post.return_value)
+            mock_post.assert_called_once_with(
+                'foo',
+                headers={
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer token',
+                    'Host': 'api.hipchat.com'
+                },
+                json={
+                    'notify': False,
+                    'message_format': 'html',
+                    'color': 'yellow',
+                    'message': 'bar',
+                    'from': ''
+                }
+            )
+            # try the kwargs
+            self.assertEqual(
+                _api('foo', 'bar', color='red', label='baz', notify=True, message_format='text'),
+                mock_post.return_value
+            )
+            mock_post.assert_called_with(
+                'foo',
+                headers={
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer token',
+                    'Host': 'api.hipchat.com'
+                },
+                json={
+                    'notify': True,
+                    'message_format': 'text',
+                    'color': 'red',
+                    'message': 'bar',
+                    'from': 'baz',
+                }
+            )
 
-        # try the defaults
-        self.assertEqual(_api('foo', 'bar'), mock_post.return_value)
-        mock_post.assert_called_once_with(
-            'foo',
-            headers={
-                'Content-Type': 'application/json',
-                'Authorization': 'Bearer token',
-                'Host': 'api.hipchat.com'
-            },
-            json={
-                'notify': False,
-                'message_format': 'html',
-                'color': 'yellow',
-                'message': 'bar',
-                'from': ''
-            }
-        )
+            # force response.raise_for_status to raise an error
+            response = unittest.mock.Mock(status_code=400)
+            response.json.return_value = {'error': {'message': 'uh-oh'}}
+            mock_post.side_effect = requests.HTTPError(response=response)
+            self.assertRaises(HipChatError, _api, 'foo', 'bar')
 
-        # try the kwargs
-        self.assertEqual(
-            _api('foo', 'bar', color='red', label='baz', notify=True, message_format='text'),
-            mock_post.return_value
-        )
-        mock_post.assert_called_with(
-            'foo',
-            headers={
-                'Content-Type': 'application/json',
-                'Authorization': 'Bearer token',
-                'Host': 'api.hipchat.com'
-            },
-            json={
-                'notify': True,
-                'message_format': 'text',
-                'color': 'red',
-                'message': 'bar',
-                'from': 'baz',
-            }
-        )
-
-        # force response.raise_for_status to raise an error
-        response = mock.Mock(status_code=400)
-        response.json.return_value = {'error': {'message': 'uh-oh'}}
-        mock_post.side_effect = requests.HTTPError(response=response)
-        self.assertRaises(HipChatError, _api, 'foo', 'bar')
-
-    @mock.patch('hipchat.notifications._api')
+    @unittest.mock.patch('hipchat.notifications._api')
     def test_notify_room(self, mock_api):
         """Test the notify_room function calls the correct API."""
         notify_room('foo', 'bar')
@@ -207,7 +196,7 @@ class FunctionTests(unittest.TestCase):
             label=None
         )
 
-    @mock.patch('hipchat.notifications._api')
+    @unittest.mock.patch('hipchat.notifications._api')
     def test_notify_user(self, mock_api):
         """Test the notify_user function calls the correct API."""
         notify_user('Fred', 'Hello, Fred')
@@ -218,32 +207,32 @@ class FunctionTests(unittest.TestCase):
             notify=False,
         )
 
-    @mock.patch('hipchat.notifications.notify_room')
+    @unittest.mock.patch('hipchat.notifications.notify_room')
     def test_yellow(self, mock_api):
         yellow('foo', 'bar')
         mock_api.assert_called_once_with('foo', 'bar', color='yellow')
 
-    @mock.patch('hipchat.notifications.notify_room')
+    @unittest.mock.patch('hipchat.notifications.notify_room')
     def test_gray(self, mock_api):
         gray('foo', 'bar')
         mock_api.assert_called_once_with('foo', 'bar', color='gray')
 
-    @mock.patch('hipchat.notifications.notify_room')
+    @unittest.mock.patch('hipchat.notifications.notify_room')
     def test_grey(self, mock_api):
         grey('foo', 'bar')
         mock_api.assert_called_once_with('foo', 'bar', color='gray')
 
-    @mock.patch('hipchat.notifications.notify_room')
+    @unittest.mock.patch('hipchat.notifications.notify_room')
     def test_green(self, mock_api):
         green('foo', 'bar')
         mock_api.assert_called_once_with('foo', 'bar', color='green')
 
-    @mock.patch('hipchat.notifications.notify_room')
+    @unittest.mock.patch('hipchat.notifications.notify_room')
     def test_purple(self, mock_api):
         purple('foo', 'bar')
         mock_api.assert_called_once_with('foo', 'bar', color='purple')
 
-    @mock.patch('hipchat.notifications.notify_room')
+    @unittest.mock.patch('hipchat.notifications.notify_room')
     def test_red(self, mock_api):
         red('foo', 'bar')
         mock_api.assert_called_once_with('foo', 'bar', color='red')

@@ -18,4 +18,5 @@ class HipChatError(Exception):
         # NB this is brittle and depends on the API error response existing
         # in the correct format. This is by design - if the response format
         # changes we need to know.
-        super(HipChatError, self).__init__(response.json()['error']['message'])
+        self.message = response.json()['error']['message']
+        super(HipChatError, self).__init__()

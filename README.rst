@@ -4,9 +4,6 @@
 .. image:: https://badge.fury.io/py/hipchat-notifications.svg
     :target: https://badge.fury.io/py/hipchat-notifications
 
-.. image:: https://codecov.io/gh/yunojuno/hipchat-notifications/branch/master/graph/badge.svg
-    :target: https://codecov.io/gh/yunojuno/hipchat-notifications
-
 HipChat Notifications
 =====================
 
