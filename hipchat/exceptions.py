@@ -9,10 +9,10 @@ class HipChatError(Exception):
 
     def __init__(self, response):
         assert response.status_code in BAD_RESPONSE_CODES, (
-            u"Invalid HipChatError response.status_code:{}".format(response)
+            "Invalid HipChatError response.status_code:{}".format(response)
         )
         assert 'error' in response.json(), (
-            u"Invalid HipChatError response.json(): {}".format(response)
+            "Invalid HipChatError response.json(): {}".format(response)
         )
         self.status_code = response.status_code
         # NB this is brittle and depends on the API error response existing

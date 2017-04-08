@@ -99,10 +99,10 @@ def _api(
 
     """
     # asserts - message, colour and format are acceptable
-    assert message is not None, u"Missing message param"
-    assert len(message) >= 1, u"Message too short, must be 1-10,000 chars."
-    assert color in VALID_COLORS, u"Invalid color value: {}".format(color)
-    assert message_format in VALID_FORMATS, u"Invalid format: {}".format(message_format)
+    assert message is not None, "Missing message param"
+    assert len(message) >= 1, "Message too short, must be 1-10,000 chars."
+    assert color in VALID_COLORS, "Invalid color value: {}".format(color)
+    assert message_format in VALID_FORMATS, "Invalid format: {}".format(message_format)
 
     token = _token()
     if token is None:
