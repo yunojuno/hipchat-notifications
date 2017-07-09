@@ -22,7 +22,12 @@ import requests
 
 from .exceptions import HipChatError
 
-API_V2_ROOT = 'https://api.hipchat.com/v2/'
+if os.environ.get('HIPCHAT_API_SERVER'):
+    API_SERVER_HOST = os.environ.get('HIPCHAT_SERVER')
+else:
+    API_SERVER_HOST = 'api.hipchat.com'
+
+API_V2_ROOT = API_V2_ROOT = 'https://' + API_SERVER_HOST + '/v2/'
 SEND_USER_MESSAGE_URL = lambda user: "{}user/{}/message".format(API_V2_ROOT, user)
 SEND_ROOM_MESSAGE_URL = lambda room: "{}room/{}/notification".format(API_V2_ROOT, room)
 VALID_COLORS = ('yellow', 'green', 'red', 'purple', 'gray', 'random')
@@ -65,7 +70,7 @@ def _headers(auth_token):
     """
     return {
         'Authorization': 'Bearer {}'.format(auth_token),
-        'Host': 'api.hipchat.com',
+        'Host': API_SERVER_HOST,
         'Content-Type': 'application/json'
     }
 
