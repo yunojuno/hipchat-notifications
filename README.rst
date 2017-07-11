@@ -71,3 +71,10 @@ The tests can be run using ``tox``:
 .. code:: shell
 
     $ tox
+
+
+Contributors
+------------
+
+* Hugo Rodger-Brown - @hugorodgerbrown
+* Roberto Salgado - @droberin
