@@ -23,7 +23,7 @@ import requests
 from .exceptions import HipChatError
 
 if os.environ.get('HIPCHAT_API_SERVER'):
-    API_SERVER_HOST = os.environ.get('HIPCHAT_SERVER')
+    API_SERVER_HOST = os.environ.get('HIPCHAT_API_SERVER')
 else:
     API_SERVER_HOST = 'api.hipchat.com'
 
