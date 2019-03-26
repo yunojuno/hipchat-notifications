@@ -111,13 +111,12 @@ def _api(
     assert color in VALID_COLORS, "Invalid color value: {}".format(color)
     assert message_format in VALID_FORMATS, "Invalid format: {}".format(message_format)
 
+    # try to read the toekn from the environment variables
+    token = token or _token()
     if token is None:
-        # try to read the toekn from the environment variables
-        token = _token()
-        if token is None:
-            logger.debug("HipChat API token not found, logging message instead:")
-            logger.debug(message)
-            return
+        logger.debug("HipChat API token not found, logging message instead:")
+        logger.debug(message)
+        return
             
     headers = _headers(auth_token=token)
     data = {
