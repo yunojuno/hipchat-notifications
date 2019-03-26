@@ -193,7 +193,8 @@ class FunctionTests(unittest.TestCase):
             color='yellow',
             message_format='html',
             notify=False,
-            label=None
+            label=None,
+            token=None,
         )
 
     @mock.patch('hipchat.notifications._api')
@@ -205,6 +206,7 @@ class FunctionTests(unittest.TestCase):
             'Hello, Fred',
             message_format='html',
             notify=False,
+            token=None,
         )
 
     @mock.patch('hipchat.notifications.notify_room')
