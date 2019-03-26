@@ -81,7 +81,8 @@ def _api(
     color='yellow',
     label=None,
     notify=False,
-    message_format='html'
+    message_format='html',
+    token=None,
 ):
     """
     Send message to user or room via API.
@@ -99,6 +100,7 @@ def _api(
             are taken into account.
         message_format: determines how the message is rendered inside
             HipChat applications (VALID_FORMAT, default='html')
+        token: notification token
 
     Returns HTTP Response object if successful, else raises HipChatError.
 
@@ -109,11 +111,13 @@ def _api(
     assert color in VALID_COLORS, "Invalid color value: {}".format(color)
     assert message_format in VALID_FORMATS, "Invalid format: {}".format(message_format)
 
-    token = _token()
+    # try to read the toekn from the environment variables
+    token = token or _token()
     if token is None:
         logger.debug("HipChat API token not found, logging message instead:")
         logger.debug(message)
         return
+            
     headers = _headers(auth_token=token)
     data = {
         'message': message[:10000],
@@ -136,6 +140,7 @@ def notify_room(
     room,
     message,
     color='yellow',
+    token=None,
     label=None,
     notify=False,
     message_format='html'
@@ -148,6 +153,7 @@ def notify_room(
         message: The message body (1-10,000 chars)
 
     Kwargs:
+        token: room token
         color: background color for message (VALID_COLOR, default='yellow')
         label: label to be shown in addition to the sender's name, (0-64 chars)
         notify: bool (default=False), whether this message should trigger a
@@ -166,6 +172,7 @@ def notify_room(
         color=color,
         label=label,
         notify=notify,
+        token=token,
         message_format=message_format
     )
 
@@ -174,6 +181,7 @@ def notify_room(
 def notify_user(
     user,
     message,
+    token=None,
     notify=False,
     message_format='html'
 ):
@@ -185,6 +193,7 @@ def notify_user(
         message: the message body (1-10,000 chars)
 
     Kwargs:
+        token: room token
         notify: bool (default=False), whether this message should trigger a
             user notification (change the tab color, play a sound, notify
             mobile phones, etc). Each recipient's notification preferences
@@ -198,6 +207,7 @@ def notify_user(
     return _api(
         SEND_USER_MESSAGE_URL(user),
         message,
+        token=token,
         notify=notify,
         message_format=message_format
     )
